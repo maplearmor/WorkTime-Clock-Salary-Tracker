@@ -1,0 +1,6 @@
+{
+  "name": "WorkTime Clock & Salary Tracker",
+  "description": "Executive work time tracking, multi-job management, real-time punch clock, statutory tax calculations, and punch audit timesheets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
