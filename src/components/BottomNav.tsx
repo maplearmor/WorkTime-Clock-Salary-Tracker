@@ -2,15 +2,15 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 
 export const BottomNav: React.FC = () => {
-  const { currentView, setCurrentView } = useApp();
+  const { currentView, setCurrentView, t } = useApp();
 
   const navItems = [
-    { key: 'clock', label: 'Clock', icon: 'schedule' },
-    { key: 'timesheet', label: 'Timesheet', icon: 'list_alt' },
-    { key: 'salary', label: 'Salary', icon: 'payments' },
-    { key: 'expenses', label: 'Expenses', icon: 'account_balance_wallet' },
-    { key: 'calendar', label: 'Calendar', icon: 'calendar_today' },
-    { key: 'settings', label: 'Settings', icon: 'tune' },
+    { key: 'clock', label: t('navClock'), icon: 'schedule' },
+    { key: 'timesheet', label: t('navTimesheet'), icon: 'list_alt' },
+    { key: 'salary', label: t('navSalary'), icon: 'payments' },
+    { key: 'expenses', label: t('navExpenses'), icon: 'account_balance_wallet' },
+    { key: 'calendar', label: t('navCalendar'), icon: 'calendar_today' },
+    { key: 'settings', label: t('navSettings'), icon: 'tune' },
   ] as const;
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 
 interface ClockViewProps {
@@ -28,23 +28,35 @@ export const ClockView: React.FC<ClockViewProps> = ({
     weeklyStats,
     todayTimeline,
     setCurrentView,
+    t,
   } = useApp();
 
-  const [currentTime, setCurrentTime] = useState<{
-    hours: string;
-    minutes: string;
-    seconds: string;
-    ampm: string;
-    dateStr: string;
-  }>({
-    hours: '08',
-    minutes: '24',
-    seconds: '03',
-    ampm: 'AM',
-    dateStr: 'Thursday, Oct 24, 2026',
+  const [jobDropdownOpen, setJobDropdownOpen] = useState(false);
+  const jobButtonRef = useRef<HTMLButtonElement>(null);
+
+  const [currentTime, setCurrentTime] = useState(() => {
+    const now = new Date();
+    const rawHours = now.getHours();
+    const h = String(rawHours % 12 || 12).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    const ampm = rawHours >= 12 ? 'PM' : 'AM';
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dateStr = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+    return { hours: h, minutes: m, seconds: s, ampm, dateStr };
   });
 
-  const [noticeDismissed, setNoticeDismissed] = useState(false);
+
+  useEffect(() => {
+    if (jobDropdownOpen) {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setJobDropdownOpen(false);
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [jobDropdownOpen]);
 
   useEffect(() => {
     const update = () => {
@@ -74,272 +86,63 @@ export const ClockView: React.FC<ClockViewProps> = ({
 
   return (
     <div className="flex flex-col w-full px-3.5 sm:px-4 pb-24 gap-3 pt-2">
-      {/* State Simulation Control Bar */}
-      <div className="bg-[#eff4ff] border border-slate-200/60 rounded-xl px-3 py-2 flex items-center justify-between gap-1.5 shadow-sm animate-entrance">
-        <div className="flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[16px] text-[#006c4a]">tune</span>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Simulate:</span>
-        </div>
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+      {/* State Simulation Bar (Simulate State button removed, others preserved) */}
+      <div className="bg-[#eff4ff] border border-slate-200/60 rounded-xl p-1.5 sm:p-2 shadow-xs">
+        <div className="grid grid-cols-4 gap-1.5 w-full">
           <button
             onClick={() => simulateState('WORKING')}
-            className={`px-2 py-0.8 rounded-lg text-[10px] font-bold uppercase transition-all active:scale-95 ${
+            className={`w-full py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all active:scale-95 border flex items-center justify-center ${
               punchState === 'WORKING'
-                ? 'bg-[#131b2e] text-[#82f5c1] shadow-sm'
-                : 'bg-white hover:bg-slate-100 text-slate-600'
+                ? 'bg-[#131b2e] text-[#82f5c1] border-[#131b2e] shadow-xs'
+                : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-2xs'
             }`}
             type="button"
           >
-            Working
+            {t('working')}
           </button>
           <button
             onClick={() => simulateState('ON_BREAK')}
-            className={`px-2 py-0.8 rounded-lg text-[10px] font-bold uppercase transition-all active:scale-95 ${
+            className={`w-full py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all active:scale-95 border flex items-center justify-center ${
               punchState === 'ON_BREAK'
-                ? 'bg-amber-500 text-white shadow-sm'
-                : 'bg-white hover:bg-slate-100 text-slate-600'
+                ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-2xs'
             }`}
             type="button"
           >
-            Break
+            {t('break')}
           </button>
           <button
             onClick={() => simulateState('CLOCKED_OUT')}
-            className={`px-2 py-0.8 rounded-lg text-[10px] font-bold uppercase transition-all active:scale-95 ${
+            className={`w-full py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all active:scale-95 border flex items-center justify-center ${
               punchState === 'CLOCKED_OUT'
-                ? 'bg-[#213145] text-white shadow-sm'
-                : 'bg-white hover:bg-slate-100 text-slate-600'
+                ? 'bg-[#213145] text-white border-[#213145] shadow-xs'
+                : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-2xs'
             }`}
             type="button"
           >
-            Off Shift
+            {t('offShift')}
           </button>
           <button
             onClick={() => simulateState('MISSED_PUNCH')}
-            className={`px-2 py-0.8 rounded-lg text-[10px] font-bold uppercase transition-all active:scale-95 ${
+            className={`w-full py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all active:scale-95 border flex items-center justify-center ${
               punchState === 'MISSED_PUNCH'
-                ? 'bg-[#ffdad6] text-[#93000a] shadow-sm'
-                : 'bg-white hover:bg-slate-100 text-slate-600'
+                ? 'bg-[#ffdad6] text-[#93000a] border-red-300 shadow-xs'
+                : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-2xs'
             }`}
             type="button"
           >
-            Missed
+            {t('missed')}
           </button>
         </div>
       </div>
 
-      {/* Multi-Job Switcher Horizontal Pills */}
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-          {jobs.map((job) => {
-            const isSelected = job.id === activeJob.id;
-            return (
-              <button
-                key={job.id}
-                onClick={() => switchJob(job.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0 text-xs font-semibold transition-all active:scale-95 ${
-                  isSelected
-                    ? 'bg-[#131b2e] text-white shadow-sm'
-                    : 'bg-[#eff4ff] hover:bg-[#e5eeff] text-slate-700'
-                }`}
-                type="button"
-              >
-                <span
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: isSelected ? job.accentBg : '#94a3b8' }}
-                />
-                <span className="truncate max-w-[150px]">
-                  {job.shortName} • {job.currency} ({job.currencySymbol}
-                  {job.hourlyRate.toFixed(2)})
-                </span>
-              </button>
-            );
-          })}
-          <button
-            onClick={onOpenAddJob}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-slate-100 text-slate-700 flex-shrink-0 shadow-sm border border-slate-200 text-xs font-medium active:scale-95 transition-all"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-[16px] text-[#006c4a]">add</span>
-            <span>Add Job</span>
-          </button>
-        </div>
-
-        {/* Active Profile & Role Meta Banner */}
-        <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-200/60 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-10 h-10 rounded-lg bg-[#e5eeff] flex items-center justify-center flex-shrink-0 text-[#006c4a]">
-              <span className="material-symbols-outlined text-[24px]">terminal</span>
-            </div>
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="font-display font-semibold text-sm text-[#0b1c30] truncate">
-                  {activeJob.companyName}
-                </span>
-                <span className="material-symbols-outlined text-[#006c4a] text-[16px]">verified</span>
-              </div>
-              <span className="text-xs text-slate-500 truncate">
-                {activeJob.position} • {activeJob.currencySymbol}
-                {activeJob.hourlyRate.toFixed(2)} {activeJob.currency}/hr
-              </span>
-            </div>
-          </div>
-          <div className="flex flex-col items-end flex-shrink-0">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Shift Rate</span>
-            <span className="font-mono text-xs text-[#006c4a] font-semibold">1.0x Regular</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Dynamic Contextual Notice Alert (Missed Punch, Shift Completed, or Review) */}
-      {!noticeDismissed && (
-        <div
-          className={`rounded-xl p-3 shadow-sm flex items-start gap-2.5 relative overflow-hidden transition-all ${
-            punchState === 'MISSED_PUNCH'
-              ? 'bg-[#ffdad6] border border-red-300 alert-card-pulse'
-              : punchState === 'CLOCKED_OUT'
-              ? 'bg-[#82f5c1]/20 border border-emerald-200'
-              : punchState === 'ON_BREAK'
-              ? 'bg-amber-50 border border-amber-200'
-              : 'bg-[#dce9ff]/60 border border-slate-200/70 alert-card-pulse'
-          }`}
-        >
-          <div
-            className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-              punchState === 'MISSED_PUNCH'
-                ? 'bg-red-200 text-[#ba1a1a]'
-                : punchState === 'CLOCKED_OUT'
-                ? 'bg-emerald-100 text-[#006c4a]'
-                : punchState === 'ON_BREAK'
-                ? 'bg-amber-100 text-amber-700'
-                : 'bg-[#d3e4fe] text-[#ba1a1a]'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[20px]">
-              {punchState === 'MISSED_PUNCH'
-                ? 'warning'
-                : punchState === 'CLOCKED_OUT'
-                ? 'verified'
-                : punchState === 'ON_BREAK'
-                ? 'free_breakfast'
-                : 'notification_important'}
-            </span>
-          </div>
-          <div className="flex flex-col flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-display font-semibold text-xs sm:text-sm text-[#0b1c30]">
-                {punchState === 'MISSED_PUNCH'
-                  ? '⚠ You may have forgotten to punch out'
-                  : punchState === 'CLOCKED_OUT'
-                  ? 'Workday Completed!'
-                  : punchState === 'ON_BREAK'
-                  ? 'Rest Period Active'
-                  : "Review Yesterday's Punch"}
-              </span>
-              <span
-                className={`text-[9px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${
-                  punchState === 'MISSED_PUNCH'
-                    ? 'bg-[#ba1a1a] text-white'
-                    : punchState === 'CLOCKED_OUT'
-                    ? 'bg-[#006c4a] text-white'
-                    : punchState === 'ON_BREAK'
-                    ? 'bg-amber-200 text-amber-900'
-                    : 'bg-[#ffdad6] text-[#93000a]'
-                }`}
-              >
-                {punchState === 'MISSED_PUNCH'
-                  ? 'Overdue'
-                  : punchState === 'CLOCKED_OUT'
-                  ? 'Saved'
-                  : punchState === 'ON_BREAK'
-                  ? 'Resting'
-                  : 'Pending'}
-              </span>
-            </div>
-            <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">
-              {punchState === 'MISSED_PUNCH'
-                ? 'Expected End: 5:00 PM (Current: 6:15 PM). You are still clocked in past scheduled shift end.'
-                : punchState === 'CLOCKED_OUT'
-                ? 'Great work today! All hours and estimated gross & net earnings are saved into your biweekly timesheet.'
-                : punchState === 'ON_BREAK'
-                ? 'You are on scheduled break. Working timer is paused until you click End Break to resume.'
-                : 'Your scheduled shift finished at 5:00 PM yesterday without a checkout stamp. Adjust prior entry?'}
-            </p>
-            <div className="flex items-center gap-2 mt-2">
-              {punchState === 'MISSED_PUNCH' ? (
-                <>
-                  <button
-                    onClick={punchOut}
-                    className="px-2.5 py-1 rounded-lg bg-[#ba1a1a] hover:bg-red-800 text-white text-xs font-semibold active:scale-95 transition-all shadow-sm flex items-center gap-1"
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">logout</span>
-                    <span>PUNCH OUT NOW</span>
-                  </button>
-                  <button
-                    onClick={onOpenAdjustPunch}
-                    className="px-2.5 py-1 rounded-lg bg-[#213145] text-[#eaf1ff] text-xs font-semibold hover:opacity-90 active:scale-95 transition-all"
-                    type="button"
-                  >
-                    EDIT TIME
-                  </button>
-                  <button
-                    onClick={() => setNoticeDismissed(true)}
-                    className="text-xs text-slate-500 hover:text-slate-800 transition-colors ml-1"
-                    type="button"
-                  >
-                    DISMISS
-                  </button>
-                </>
-              ) : punchState === 'CLOCKED_OUT' ? (
-                <button
-                  onClick={() => setCurrentView('timesheet')}
-                  className="px-2.5 py-1 rounded-lg bg-[#006c4a] text-white text-xs font-semibold hover:bg-[#005137] active:scale-95 transition-all shadow-sm flex items-center gap-1"
-                  type="button"
-                >
-                  <span className="material-symbols-outlined text-[14px]">receipt_long</span>
-                  <span>View in Timesheet</span>
-                </button>
-              ) : punchState === 'ON_BREAK' ? (
-                <button
-                  onClick={endBreak}
-                  className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold active:scale-95 transition-all shadow-sm flex items-center gap-1"
-                  type="button"
-                >
-                  <span className="material-symbols-outlined text-[14px]">play_arrow</span>
-                  <span>Resume Shift</span>
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={onOpenAdjustPunch}
-                    className="px-2.5 py-1 rounded-lg bg-[#213145] text-[#eaf1ff] text-xs font-semibold hover:opacity-90 active:scale-95 transition-all flex items-center gap-1 shadow-sm"
-                    type="button"
-                  >
-                    <span>Adjust Punch</span>
-                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-                  </button>
-                  <button
-                    onClick={() => setNoticeDismissed(true)}
-                    className="text-xs text-slate-500 hover:text-slate-800 transition-colors"
-                    type="button"
-                  >
-                    Dismiss
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Live Punch Hero Module */}
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200/60 flex flex-col gap-3 relative overflow-hidden">
-        {/* Top Status Row */}
+      {/* Live Punch Hero Module (Where punch in button is located) */}
+      <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200/60 flex flex-col gap-3 relative">
+        {/* Top Status Row: Off Shift Indicator & Acme Tech Dropdown */}
         <div className="flex items-center justify-between gap-2">
-          {/* Active Working Status Pill */}
+          {/* Active Working / Off Shift Status Pill */}
           <div
-            className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
               punchState === 'WORKING'
                 ? 'bg-[#82f5c1] text-[#00714e]'
                 : punchState === 'ON_BREAK'
@@ -367,21 +170,134 @@ export const ClockView: React.FC<ClockViewProps> = ({
             </span>
             <span>
               {punchState === 'WORKING'
-                ? 'Currently Working'
+                ? t('currentlyWorking')
                 : punchState === 'ON_BREAK'
-                ? 'On Break (Resting)'
+                ? t('onBreak')
                 : punchState === 'MISSED_PUNCH'
-                ? 'Missed Punch-Out'
-                : 'Off Shift'}
+                ? t('missedPunchOut')
+                : t('offShiftStatus')}
             </span>
           </div>
-          <span className="text-xs text-slate-500">
-            {punchState === 'WORKING'
-              ? 'Shift: 08:45 AM'
-              : punchState === 'ON_BREAK'
-              ? 'Break: 30m max'
-              : 'Shift Completed'}
-          </span>
+
+          {/* Active Job Selection Dropdown (Positioned on top where off shift indicator is located) */}
+          <div className="relative">
+            <button
+              ref={jobButtonRef}
+              onClick={() => setJobDropdownOpen(!jobDropdownOpen)}
+              className="h-8 px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-300 flex items-center gap-1.5 transition-all active:scale-95 text-xs text-[#0b1c30] font-semibold shadow-2xs"
+              type="button"
+              title="Switch Active Job Profile"
+            >
+              <span
+                className="w-2.5 h-2.5 rounded-full shrink-0 border border-black/15 shadow-2xs"
+                style={{ backgroundColor: activeJob.color }}
+              />
+              <span className="max-w-[105px] xs:max-w-[135px] truncate font-semibold">
+                {activeJob.shortName} ({activeJob.currency})
+              </span>
+              <span className="material-symbols-outlined text-[16px] text-slate-500 shrink-0">arrow_drop_down</span>
+            </button>
+
+            {jobDropdownOpen && (
+              <>
+                {/* Solid Dim Backdrop */}
+                <div
+                  className="fixed inset-0 z-[60] bg-black/40"
+                  onClick={() => setJobDropdownOpen(false)}
+                />
+
+                {/* 100% Solid Opaque Dropdown Menu */}
+                <div
+                  style={{ backgroundColor: '#ffffff', opacity: 1 }}
+                  className="absolute right-0 top-full mt-2 w-[min(300px,calc(100vw-36px))] bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.35)] border-2 border-slate-300 py-0 z-[70] text-slate-900 overflow-hidden"
+                >
+                  {/* Header */}
+                  <div
+                    style={{ backgroundColor: '#f1f5f9' }}
+                    className="px-3.5 py-2.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between"
+                  >
+                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                      Select Active Job
+                    </span>
+                    <span className="text-[10px] font-bold text-[#006c4a] bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
+                      {jobs.length} profiles
+                    </span>
+                  </div>
+
+                  {/* Job Options List */}
+                  <div
+                    style={{ backgroundColor: '#ffffff' }}
+                    className="max-h-[min(300px,50vh)] overflow-y-auto divide-y divide-slate-100 no-scrollbar bg-white"
+                  >
+                    {jobs.map((job) => {
+                      const isSelected = job.id === activeJob.id;
+                      return (
+                        <button
+                          key={job.id}
+                          onClick={() => {
+                            switchJob(job.id);
+                            setJobDropdownOpen(false);
+                          }}
+                          style={{ backgroundColor: isSelected ? '#eff6ff' : '#ffffff' }}
+                          className={`w-full text-left px-3.5 py-3 flex items-center justify-between text-xs transition-colors min-h-[48px] ${
+                            isSelected
+                              ? 'bg-blue-50 font-bold border-l-4 border-l-[#006c4a]'
+                              : 'hover:bg-slate-50 border-l-4 border-l-transparent text-slate-800'
+                          }`}
+                          type="button"
+                        >
+                          <div className="flex items-center gap-2.5 truncate flex-1 min-w-0 mr-2">
+                            <span
+                              className="w-3.5 h-3.5 rounded-full shrink-0 border border-black/20 shadow-xs"
+                              style={{ backgroundColor: job.color }}
+                            />
+                            <div className="truncate flex-1 min-w-0">
+                              <div className="truncate font-bold text-slate-900 text-xs">
+                                {job.companyName}
+                              </div>
+                              <div className="text-[11px] text-slate-600 truncate mt-0.5 font-medium">
+                                {job.currencySymbol}
+                                {job.hourlyRate.toFixed(2)} {job.currency}/hr • {job.province}, {job.country.toUpperCase()}
+                              </div>
+                            </div>
+                          </div>
+                          {isSelected ? (
+                            <span className="material-symbols-outlined text-[20px] text-[#006c4a] shrink-0 font-bold">
+                              check_circle
+                            </span>
+                          ) : (
+                            <span className="material-symbols-outlined text-[18px] text-slate-300 shrink-0">
+                              radio_button_unchecked
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Add New Job Profile Action */}
+                  <div
+                    style={{ backgroundColor: '#f8fafc' }}
+                    className="p-2.5 border-t border-slate-200 bg-slate-50"
+                  >
+                    <button
+                      onClick={() => {
+                        setJobDropdownOpen(false);
+                        onOpenAddJob();
+                      }}
+                      className="w-full min-h-[38px] py-2 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs active:scale-95"
+                      type="button"
+                    >
+                      <span className="material-symbols-outlined text-[17px] text-[#006c4a] font-bold">
+                        add_circle
+                      </span>
+                      <span>Add New Job Profile</span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Live Digital Clock & Elapsed Tracker */}
@@ -428,7 +344,7 @@ export const ClockView: React.FC<ClockViewProps> = ({
                   type="button"
                 >
                   <span className="material-symbols-outlined text-[20px]">logout</span>
-                  <span>PUNCH OUT</span>
+                  <span>{t('punchOut')}</span>
                 </button>
                 <button
                   onClick={startBreak}
@@ -436,7 +352,7 @@ export const ClockView: React.FC<ClockViewProps> = ({
                   type="button"
                 >
                   <span className="material-symbols-outlined text-[20px] text-[#006c4a]">coffee</span>
-                  <span>Start Break (30m)</span>
+                  <span>{t('takeBreak')} (30m)</span>
                 </button>
               </>
             ) : punchState === 'ON_BREAK' ? (
@@ -447,7 +363,7 @@ export const ClockView: React.FC<ClockViewProps> = ({
                   type="button"
                 >
                   <span className="material-symbols-outlined text-[20px]">play_arrow</span>
-                  <span>END BREAK (RESUME)</span>
+                  <span>{t('resumeShift')}</span>
                 </button>
                 <button
                   onClick={punchOut}
@@ -455,7 +371,7 @@ export const ClockView: React.FC<ClockViewProps> = ({
                   type="button"
                 >
                   <span className="material-symbols-outlined text-[20px]">logout</span>
-                  <span>Punch Out Directly</span>
+                  <span>{t('punchOutNow')}</span>
                 </button>
               </>
             ) : (
@@ -466,7 +382,7 @@ export const ClockView: React.FC<ClockViewProps> = ({
                   type="button"
                 >
                   <span className="material-symbols-outlined text-[20px]">login</span>
-                  <span>PUNCH IN</span>
+                  <span>{t('punchIn')}</span>
                 </button>
                 <button
                   onClick={onOpenManualEntry}
@@ -474,7 +390,7 @@ export const ClockView: React.FC<ClockViewProps> = ({
                   type="button"
                 >
                   <span className="material-symbols-outlined text-[20px] text-[#006c4a]">edit_calendar</span>
-                  <span>Log Shift Record</span>
+                  <span>{t('logShiftRecord')}</span>
                 </button>
               </>
             )}

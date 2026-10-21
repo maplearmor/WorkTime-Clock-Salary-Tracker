@@ -14,9 +14,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 }) => {
   const { activeJob, customHolidays, deleteCustomHoliday, jobTimeEntries } = useApp();
 
-  const [currentYear, setCurrentYear] = useState(2026);
-  const [currentMonth, setCurrentMonth] = useState(9); // 0-indexed: 9 = October
-  const [selectedDay, setSelectedDay] = useState<number>(24);
+  const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth());
+  const [selectedDay, setSelectedDay] = useState<number>(() => new Date().getDate());
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',

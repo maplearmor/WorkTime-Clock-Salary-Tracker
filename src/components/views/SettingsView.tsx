@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { CountryCode, WageType, PayFrequency } from '../../types';
 import { exportTimesheetCSV, exportAuditJSON } from '../../services/exportService';
+import { SUPPORTED_LANGUAGES } from '../../services/i18n';
 
 export const SettingsView: React.FC = () => {
-  const { activeJob, updateJob, jobTimeEntries, auditRecords, showToast, resetToDemoData } = useApp();
+  const { activeJob, updateJob, jobTimeEntries, auditRecords, showToast, resetToDemoData, language, setLanguage, t } = useApp();
 
   const [country, setCountry] = useState<CountryCode>(activeJob.country);
   const [province, setProvince] = useState(activeJob.province);
@@ -122,18 +123,92 @@ export const SettingsView: React.FC = () => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="font-display font-semibold text-sm text-[#0b1c30]">
-                Compliance &amp; Tax Engine
+                {t('complianceTitle')}
               </span>
               <span className="px-2 py-0.2 rounded-full bg-[#82f5c1] text-[#00714e] text-[9px] uppercase font-bold tracking-wider">
-                Active
+                {t('activeBadge')}
               </span>
             </div>
             <p className="text-xs text-slate-600 mt-0.5 leading-snug">
-              {province} ({country.toUpperCase()}) statutory rules synchronized for fiscal tax year {taxYear}.
+              {province} ({country.toUpperCase()}) {t('complianceSubtitle')} {taxYear}.
             </p>
           </div>
         </div>
       </div>
+
+      {/* Language & Regional Preferences Section */}
+      <section className="rounded-xl bg-white p-3.5 shadow-sm border border-slate-200/60 flex flex-col gap-3">
+        <div className="flex items-center justify-between pb-0.5">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#006c4a] text-[18px]">translate</span>
+            <h2 className="font-display font-semibold text-sm text-[#0b1c30]">
+              {t('languageSettingsTitle')}
+            </h2>
+          </div>
+          <span className="font-mono text-[11px] text-[#006c4a] bg-emerald-50 px-2 py-0.5 rounded font-bold border border-emerald-200 uppercase">
+            {language}
+          </span>
+        </div>
+
+        <p className="text-xs text-slate-500 leading-snug">
+          {t('languageSettingsSubtitle')}
+        </p>
+
+        {/* Interactive Language Selection Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+          {SUPPORTED_LANGUAGES.map((lang) => {
+            const isSelected = language === lang.code;
+            return (
+              <button
+                key={lang.code}
+                type="button"
+                onClick={() => {
+                  setLanguage(lang.code);
+                  showToast(t('languageSavedToast'));
+                }}
+                className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all ${
+                  isSelected
+                    ? 'border-[#006c4a] bg-emerald-50/70 text-[#006c4a] ring-1 ring-[#006c4a] shadow-sm'
+                    : 'border-slate-200 bg-[#eff4ff]/60 hover:bg-[#eff4ff] text-slate-700'
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-xl leading-none flex-shrink-0" role="img" aria-label={lang.name}>
+                    {lang.flag}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold truncate">
+                        {lang.nativeName}
+                      </span>
+                      {lang.nativeName !== lang.name && (
+                        <span className="text-[10px] text-slate-400 font-medium truncate">
+                          ({lang.name})
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-slate-500 block truncate">
+                      {lang.region}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex-shrink-0 pl-2">
+                  {isSelected ? (
+                    <span className="w-5 h-5 rounded-full bg-[#006c4a] text-white flex items-center justify-center shadow-xs">
+                      <span className="material-symbols-outlined text-[14px]">check</span>
+                    </span>
+                  ) : (
+                    <span className="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-transparent">
+                      <span className="material-symbols-outlined text-[12px]">check</span>
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Section 1: Jurisdiction & Currency */}
       <section className="rounded-xl bg-white p-3.5 shadow-sm border border-slate-200/60 flex flex-col gap-3">

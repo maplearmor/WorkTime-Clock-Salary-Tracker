@@ -20,6 +20,7 @@ export const TimesheetView: React.FC<TimesheetViewProps> = ({
     resolveMissedPunch,
     currentSalaryBreakdown,
     setCurrentView,
+    t,
   } = useApp();
 
   const [activeFilter, setActiveFilter] = useState<'all' | 'missed' | 'ot' | 'approved'>('all');
@@ -50,51 +51,11 @@ export const TimesheetView: React.FC<TimesheetViewProps> = ({
   const totalReg = filteredEntries.reduce((sum, e) => sum + e.regularHours, 0);
   const totalOt = filteredEntries.reduce((sum, e) => sum + e.overtimeHours, 0);
 
-  const handlePrevPeriod = () => {
-    if (selectedPeriodIndex < periods.length - 1) setSelectedPeriodIndex(selectedPeriodIndex + 1);
-  };
-
-  const handleNextPeriod = () => {
-    if (selectedPeriodIndex > 0) setSelectedPeriodIndex(selectedPeriodIndex - 1);
-  };
 
   return (
     <div className="flex flex-col w-full px-3.5 sm:px-4 pb-24 gap-3.5 pt-2">
       {/* Pay Period Navigation & Summary Header */}
       <section className="flex flex-col gap-2.5">
-        <div className="flex items-center justify-between gap-2 bg-[#eff4ff] p-2 sm:p-2.5 rounded-xl shadow-sm border border-slate-200/50">
-          <button
-            onClick={handlePrevPeriod}
-            disabled={selectedPeriodIndex === periods.length - 1}
-            aria-label="Previous pay period"
-            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white text-[#0b1c30] hover:bg-slate-100 disabled:opacity-40 active:scale-95 transition-all shadow-sm"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-[20px]">chevron_left</span>
-          </button>
-          <div className="flex flex-col items-center text-center min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="font-display font-semibold text-xs sm:text-sm text-[#0b1c30] truncate">
-                {currentPeriod.label}
-              </span>
-              {currentPeriod.inProgress && (
-                <span className="px-2 py-0.2 rounded-full bg-[#82f5c1] text-[#00714e] text-[9px] uppercase tracking-wider font-bold">
-                  In Progress
-                </span>
-              )}
-            </div>
-            <span className="text-[11px] text-slate-500">{currentPeriod.cycle}</span>
-          </div>
-          <button
-            onClick={handleNextPeriod}
-            disabled={selectedPeriodIndex === 0}
-            aria-label="Next pay period"
-            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white text-[#0b1c30] hover:bg-slate-100 disabled:opacity-40 active:scale-95 transition-all shadow-sm"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-[20px]">chevron_right</span>
-          </button>
-        </div>
 
         {/* Period Totals Waterfall Surface */}
         <div className="bg-white rounded-xl p-3.5 shadow-sm border border-slate-200/60 flex flex-col gap-2.5">
@@ -222,49 +183,35 @@ export const TimesheetView: React.FC<TimesheetViewProps> = ({
           </button>
         </div>
 
-        {/* Quick Export Action Row */}
-        <div className="flex items-center justify-between gap-2 px-1">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-            Ledger Actions
-          </span>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <button
-              onClick={() => setCurrentView('reports')}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#006c4a]/10 border border-[#006c4a]/20 hover:bg-[#006c4a]/20 text-[#006c4a] text-xs font-bold transition-colors shadow-2xs"
-              title="Open Detailed Reports & Analytics"
-              type="button"
-            >
-              <span className="material-symbols-outlined text-[16px] text-[#006c4a]">bar_chart</span>
-              <span>Reports</span>
-            </button>
-            <button
-              onClick={() => exportPayStubPDF(activeJob, currentSalaryBreakdown, currentPeriod.label)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-[#eff4ff] text-[#0b1c30] text-xs font-medium transition-colors shadow-sm"
-              title="Export Printable PDF Statement"
-              type="button"
-            >
-              <span className="material-symbols-outlined text-[16px] text-[#ba1a1a]">picture_as_pdf</span>
-              <span>PDF</span>
-            </button>
-            <button
-              onClick={() => exportTimesheetCSV(activeJob, jobTimeEntries)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-[#eff4ff] text-[#0b1c30] text-xs font-medium transition-colors shadow-sm"
-              title="Export Spreadsheet CSV"
-              type="button"
-            >
-              <span className="material-symbols-outlined text-[16px] text-[#006c4a]">table_view</span>
-              <span>.xlsx / CSV</span>
-            </button>
-            <button
-              onClick={() => onViewAudit()}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-[#eff4ff] text-[#0b1c30] text-xs font-medium transition-colors shadow-sm"
-              title="View Complete Audit History"
-              type="button"
-            >
-              <span className="material-symbols-outlined text-[16px] text-blue-600">history</span>
-              <span>Audit Log</span>
-            </button>
-          </div>
+        {/* Quick Export & Actions Toolbar (3 Full-Width Action Buttons) */}
+        <div className="grid grid-cols-3 gap-2 w-full pt-0.5">
+          <button
+            onClick={() => exportPayStubPDF(activeJob, currentSalaryBreakdown, currentPeriod.label)}
+            className="w-full flex items-center justify-center gap-1.5 h-10 px-2 sm:px-3 rounded-xl bg-white hover:bg-red-50 border border-slate-200/90 text-[#0b1c30] text-xs font-semibold transition-all shadow-2xs active:scale-95"
+            title="Export Printable PDF Statement"
+            type="button"
+          >
+            <span className="material-symbols-outlined text-[18px] text-[#ba1a1a]">picture_as_pdf</span>
+            <span className="truncate">{t('pdfPayStub')}</span>
+          </button>
+          <button
+            onClick={() => exportTimesheetCSV(activeJob, jobTimeEntries)}
+            className="w-full flex items-center justify-center gap-1.5 h-10 px-2 sm:px-3 rounded-xl bg-white hover:bg-emerald-50 border border-slate-200/90 text-[#0b1c30] text-xs font-semibold transition-all shadow-2xs active:scale-95"
+            title="Export Spreadsheet CSV"
+            type="button"
+          >
+            <span className="material-symbols-outlined text-[18px] text-[#006c4a]">table_view</span>
+            <span className="truncate">{t('excelCsv')}</span>
+          </button>
+          <button
+            onClick={() => onViewAudit()}
+            className="w-full flex items-center justify-center gap-1.5 h-10 px-2 sm:px-3 rounded-xl bg-white hover:bg-blue-50 border border-slate-200/90 text-[#0b1c30] text-xs font-semibold transition-all shadow-2xs active:scale-95"
+            title="View Complete Audit History"
+            type="button"
+          >
+            <span className="material-symbols-outlined text-[18px] text-blue-600">history</span>
+            <span className="truncate">{t('auditLog')}</span>
+          </button>
         </div>
       </section>
 

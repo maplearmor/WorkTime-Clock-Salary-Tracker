@@ -13,6 +13,7 @@ import {
   ExpenseCategory,
   RecurringBill,
   BudgetSettings,
+  AppLanguage,
 } from '../types';
 import { calculateSalary } from '../services/taxEngine';
 import { INITIAL_HOLIDAYS } from '../services/holidays';
@@ -22,6 +23,7 @@ import {
   INITIAL_BUDGET,
   EXPENSE_CATEGORIES,
 } from '../services/expenseService';
+import { TranslationKey, t as i18nT } from '../services/i18n';
 
 const STORAGE_KEY = 'worktime_clock_app_v2';
 
@@ -402,6 +404,10 @@ interface AppContextType {
     upcomingBills: RecurringBill[];
   };
 
+  language: AppLanguage;
+  setLanguage: (lang: AppLanguage) => void;
+  t: (key: TranslationKey) => string;
+
   resetToDemoData: () => void;
 }
 
@@ -512,6 +518,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   });
 
+  const [language, setLanguageState] = useState<AppLanguage>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_language`);
+      return (saved as AppLanguage) || 'en';
+    } catch {
+      return 'en';
+    }
+  });
+
+  const setLanguage = (lang: AppLanguage) => {
+    setLanguageState(lang);
+    try {
+      localStorage.setItem(`${STORAGE_KEY}_language`, lang);
+    } catch {
+      // ignore
+    }
+  };
+
+  const translate = (key: TranslationKey) => i18nT(key, language);
+
   const [currentView, setCurrentView] = useState<AppView>('clock');
   const [isIPhoneMode, setIsIPhoneMode] = useState<boolean>(true); // iPhone mobile shell by default
   const [toast, setToast] = useState<{ message: string; icon?: string; isError?: boolean } | null>(null);
@@ -530,6 +556,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(`${STORAGE_KEY}_expenses`, JSON.stringify(expenses));
       localStorage.setItem(`${STORAGE_KEY}_recurring_bills`, JSON.stringify(recurringBills));
       localStorage.setItem(`${STORAGE_KEY}_budget_settings`, JSON.stringify(budgetSettings));
+      localStorage.setItem(`${STORAGE_KEY}_language`, language);
     } catch (e) {
       console.warn('Failed to persist to localStorage', e);
     }
@@ -1132,6 +1159,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateBudgetSettings,
 
         expenseStats,
+
+        language,
+        setLanguage,
+        t: translate,
 
         resetToDemoData,
       }}

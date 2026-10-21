@@ -98,6 +98,8 @@ export interface ReportSummary {
 
 export type CountryCode = 'ca' | 'us' | 'uk' | 'cn' | 'de';
 
+export type AppLanguage = 'en' | 'fr' | 'es' | 'zh' | 'de';
+
 export type PayFrequency = 'weekly' | 'biweekly' | 'semi-monthly' | 'monthly';
 
 export type WageType = 'hourly' | 'salary';
