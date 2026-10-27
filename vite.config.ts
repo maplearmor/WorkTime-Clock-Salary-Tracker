@@ -49,6 +49,30 @@ export default defineConfig(() => {
               purpose: 'any',
             },
           ],
+          categories: ['business', 'finance', 'productivity', 'utilities'],
+          shortcuts: [
+            {
+              name: 'Punch Clock',
+              short_name: 'Clock',
+              description: 'Quick punch in or out for your current shift',
+              url: '/?action=clock',
+              icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
+            },
+            {
+              name: 'View Timesheets',
+              short_name: 'Timesheets',
+              description: 'Inspect detailed punch records and gross pay',
+              url: '/?action=timesheets',
+              icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
+            },
+            {
+              name: 'Add Expense',
+              short_name: 'Expense',
+              description: 'Log a receipt, meal, or travel expense',
+              url: '/?action=expense',
+              icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
+            },
+          ],
         },
         devOptions: {
           enabled: true,

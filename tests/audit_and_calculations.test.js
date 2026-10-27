@@ -1,5 +1,7 @@
 import { calculateSalary } from '../src/services/taxEngine.ts';
 import { EXPENSE_CATEGORIES } from '../src/services/expenseService.ts';
+import { computeShiftTimesAndPay, calculateShiftDurationHours, QUEBEC_BREAK_PRESET } from '../src/context/AppContext.tsx';
+import { translations } from '../src/services/i18n.ts';
 
 console.log('=== RUNNING WORKTIME COMPREHENSIVE AUTOMATED TESTS ===\n');
 
@@ -160,6 +162,90 @@ const scheduledTotal = sampleBills.reduce((sum, b) => {
 }, 0);
 
 assert(scheduledTotal > 1800 && scheduledTotal < 1850, `Normalized recurring monthly commitment calculated ($${scheduledTotal.toFixed(2)})`);
+
+// ----------------------------------------------------
+// Test Suite 5: Exact Break Management & Shift Calculations (Priority 4)
+// User requirement:
+// - One 30-minute unpaid break.
+// - Two 15-minute paid breaks.
+// - An eight-hour shift spanning 08:00 to 16:00.
+// Expected results:
+// - Total elapsed shift time: 8 hours.
+// - Unpaid break time: 30 minutes.
+// - Paid time: 7 hours 30 minutes, assuming two paid breaks count within paid time.
+// - Total break time: 60 minutes.
+// ----------------------------------------------------
+console.log('\n--- Test Suite 5: Exact Break Management & Shift Calculations (Priority 4) ---');
+
+const shiftBreaksSpec = [
+  { id: 'b1', name: 'Meal Break', durationMinutes: 30, isPaid: false },
+  { id: 'b2', name: 'Morning Break', durationMinutes: 15, isPaid: true },
+  { id: 'b3', name: 'Afternoon Break', durationMinutes: 15, isPaid: true },
+];
+
+const testJobRate50 = {
+  ...jobQC,
+  hourlyRate: 50.0,
+  standardDailyHours: 8.0,
+  overtimeMultiplier: 1.5,
+};
+
+const calcResult = computeShiftTimesAndPay('08:00 AM', '04:00 PM', shiftBreaksSpec, testJobRate50);
+
+assert(calcResult.shiftDurationHours === 8.0, `Total elapsed shift time is 8 hours (found: ${calcResult.shiftDurationHours}h)`);
+assert(calcResult.unpaidBreakMinutes === 30, `Unpaid break time is 30 minutes (found: ${calcResult.unpaidBreakMinutes}m)`);
+assert(calcResult.paidBreakMinutes === 30, `Paid break time is 30 minutes across 2 paid breaks (found: ${calcResult.paidBreakMinutes}m)`);
+assert(calcResult.totalBreakMinutes === 60, `Total break time is 60 minutes (found: ${calcResult.totalBreakMinutes}m)`);
+assert(calcResult.paidHours === 7.5, `Paid work time is 7 hours 30 minutes (7.5h) (found: ${calcResult.paidHours}h)`);
+assert(calcResult.regularHours === 7.5, `Regular hours equals 7.5h (found: ${calcResult.regularHours}h)`);
+assert(calcResult.overtimeHours === 0.0, `Overtime hours is 0.0 since 7.5h <= 8.0h (found: ${calcResult.overtimeHours}h)`);
+assert(calcResult.grossPay === 375.0, `Gross pay equals 7.5h @ $50.00/h = $375.00 (found: $${calcResult.grossPay.toFixed(2)})`);
+
+// Verify no double-counting or double-subtraction
+const doubleSubCheck = calcResult.shiftDurationHours - (calcResult.unpaidBreakMinutes / 60);
+assert(calcResult.paidHours === doubleSubCheck, `Unpaid break is subtracted exactly once: 8.0h - 0.5h = 7.5h (verified: ${doubleSubCheck}h)`);
+
+// ----------------------------------------------------
+// Test Suite 6: Overnight Shift & Overtime with Breaks
+// ----------------------------------------------------
+console.log('\n--- Test Suite 6: Overnight Shifts & Overtime with Breaks ---');
+
+// Overnight shift 11:00 PM to 07:00 AM (8h) crossing midnight with 30m unpaid break
+const overnightCalc = computeShiftTimesAndPay('11:00 PM', '07:00 AM', [{ durationMinutes: 30, isPaid: false }], testJobRate50);
+assert(overnightCalc.shiftDurationHours === 8.0, `Overnight shift 11:00 PM to 07:00 AM calculates to 8.0h (found: ${overnightCalc.shiftDurationHours}h)`);
+assert(overnightCalc.paidHours === 7.5, `Overnight paid hours is 7.5h after 30m unpaid meal break (found: ${overnightCalc.paidHours}h)`);
+
+// Overtime shift: 08:00 AM to 06:00 PM (10.0h elapsed) with 30m unpaid meal break
+// Billable hours = 10.0 - 0.5 = 9.5h -> 8.0h regular @ $50 ($400) + 1.5h OT @ $75 ($112.50) = $512.50
+const otShiftCalc = computeShiftTimesAndPay('08:00 AM', '06:00 PM', [{ durationMinutes: 30, isPaid: false }], testJobRate50);
+assert(otShiftCalc.shiftDurationHours === 10.0, `Overtime shift duration is 10.0h (found: ${otShiftCalc.shiftDurationHours}h)`);
+assert(otShiftCalc.paidHours === 9.5, `Overtime shift paid hours is 9.5h (found: ${otShiftCalc.paidHours}h)`);
+assert(otShiftCalc.regularHours === 8.0, `Regular hours capped at standardDailyHours 8.0 (found: ${otShiftCalc.regularHours}h)`);
+assert(otShiftCalc.overtimeHours === 1.5, `Overtime hours calculated as 1.5h (found: ${otShiftCalc.overtimeHours}h)`);
+assert(otShiftCalc.grossPay === 512.50, `Gross pay equals 8h @ $50 + 1.5h @ $75 = $512.50 (found: $${otShiftCalc.grossPay.toFixed(2)})`);
+
+// ----------------------------------------------------
+// Test Suite 7: Multilingual Audit & Key Parity
+// ----------------------------------------------------
+console.log('\n--- Test Suite 7: Multilingual Dictionary Parity & Coverage ---');
+
+const supportedLanguages = ['en', 'fr', 'es', 'zh', 'de'];
+const englishKeys = Object.keys(translations.en);
+
+assert(englishKeys.length > 100, `English dictionary contains ${englishKeys.length} verified localization keys`);
+
+supportedLanguages.forEach((lang) => {
+  const dict = translations[lang];
+  assert(dict !== undefined, `Language '${lang}' dictionary is defined`);
+  
+  let missingKeysCount = 0;
+  englishKeys.forEach((key) => {
+    if (dict[key] === undefined || dict[key] === '') {
+      missingKeysCount++;
+    }
+  });
+  assert(missingKeysCount === 0, `Language '${lang}' has 0 missing keys relative to English (100% key parity)`);
+});
 
 // ----------------------------------------------------
 // Final Summary

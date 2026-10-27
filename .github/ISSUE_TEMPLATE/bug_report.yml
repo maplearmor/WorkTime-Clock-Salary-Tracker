@@ -1,0 +1,99 @@
+name: 🐛 Bug Report
+description: Create a report to help us improve WorkTime Clock & Salary Tracker
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please provide as much relevant information as possible.
+
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: A concise description of the bug
+      placeholder: e.g. "Calendar view crashes when navigating to February on iPhone"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Operating System / Device
+      description: What platform did this happen on?
+      options:
+        - iOS (iPhone / iPad)
+        - Android (Google Pixel, Samsung, etc.)
+        - macOS (Safari, Chrome, Edge)
+        - Windows (Chrome, Edge, Firefox)
+        - Linux
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser & Mode
+      description: Which browser or mode were you using?
+      options:
+        - Safari (PWA Home Screen Installed)
+        - Safari (Browser Tab)
+        - Chrome for Android (PWA Installed)
+        - Chrome for Android (Browser Tab)
+        - Desktop Chrome / Edge
+        - Desktop Firefox
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: Selected App Language
+      options:
+        - English (en)
+        - Français (fr)
+        - Español (es)
+        - 中文 (zh)
+        - Deutsch (de)
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed step-by-step instructions
+      placeholder: |
+        1. Open the app
+        2. Switch language to French
+        3. Navigate to Timesheets
+        4. Tap 'Add Shift Entry'
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: "The shift hours should automatically calculate and the break should be deducted."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: "The page threw a blank screen / calculation was incorrect."
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Browser Console Errors / Logs
+      description: Paste any error messages from the browser developer console (if available).
+      render: shell

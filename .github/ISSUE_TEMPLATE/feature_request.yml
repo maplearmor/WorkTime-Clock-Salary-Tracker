@@ -1,0 +1,57 @@
+name: 💡 Feature Request
+description: Suggest an idea or enhancement for WorkTime Clock & Salary Tracker
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a feature! Please provide context on how this helps users track time, manage breaks, calculate pay, or track expenses.
+
+  - type: input
+    id: title
+    attributes:
+      label: Feature Title
+      placeholder: e.g. "Add support for Australian superannuation tax calculations"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Area / Category
+      options:
+        - Punch Clock & Shift Timing
+        - Flexible Break Management
+        - Multi-Job & Currency Management
+        - Statutory Taxes & Pay Deductions
+        - Timesheets & Reports
+        - Expenses & Budget Tracking
+        - Calendar & Holidays
+        - Mobile PWA & Responsiveness
+        - Translations & Localization
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Use Case
+      description: Is your feature request related to a problem? Please describe clearly.
+      placeholder: "I need to track statutory unpaid breaks mandated by California labor law..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative solutions or workarounds you've explored.
